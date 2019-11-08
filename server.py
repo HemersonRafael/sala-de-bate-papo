@@ -12,34 +12,33 @@ import threading # threads
 import time # tempo (opcional)
 import json
 
+LIST_SOCKET = {}
+
 def formatMsg(sizeMsg,nickname,command, msg):
     return json.dumps({"sizeMsg":sizeMsg,"nickname":nickname, "command": command, "msg":msg}).encode('utf-8')
+
 def unformatMsg(data):
     return json.loads(data.decode('utf-8'))
+
 def getCommand(command):
     a = command.split('(')
     return(a[0])
-def salve_cliente(connectionSocket, addr):
-    
-    if(IPS.count(addr[0]) == 0):
-        IPS.append(addr[0])
-        LISTCONNECTION.append(connectionSocket)
-        connectionSocket.send("informe o seu nickname".encode('utf-8'))
-        sentence = connectionSocket.recv(1024) # recebe dados do cliente
-        name = sentence.decode('utf-8')   
-        CLIENTES.update({addr[0]:name})
-    else:
-        pass
 
+def saveConnection(connectionSocket):
+    connectionSocket.send(formatMsg(0,' ','nickname()',' '))
+    data = unformatMsg(connectionSocket.recv(1024)) # recebe dados do cliente
+    if(data['command'] == 'nickname()'):
+        LIST_SOCKET.update({addr[0]:[connectionSocket, addr[0], addr[1], data['nickname']]})
+    else:
+        connectionSocket.send(formatMsg(0,' ','exit()',' '))
+        connectionSocket.close()    
 
 def to_receive(connectionSocket):
+    connectionSocket.send(formatMsg(0,' ','nickname()',' '))
     sentence = connectionSocket.recv(1024) # recebe dados do cliente
-    sentence = sentence.decode('utf-8')
-    capitalizedSentence = sentence.upper() # converte em letras maiusculas
-    print ('Cliente %s enviou: %s, transformando em: %s' % (addr, sentence, capitalizedSentence))
-    print(CLIENTES)
-    connectionSocket.send(capitalizedSentence.encode('utf-8')) # envia para o cliente o texto transformado
-    connectionSocket.close() # encerra o socket com o cliente
+    print(unformatMsg(sentence))
+    connectionSocket.send(formatMsg(2,'server','public()','oi'))
+    #connectionSocket.close() # encerra o socket com o cliente
 
 # define uma classe para a criacao de threads
 class minhaThread (threading.Thread):
@@ -50,22 +49,25 @@ class minhaThread (threading.Thread):
        
     # a funcao run() e executada por padrao por cada thread 
     def run(self):
+        saveConnection(self.connectionSocket)
         to_receive(self.connectionSocket)
        
 
 # definicao das variaveis
-serverName = '10.6.3.221' # ip do servidor (em branco)
+serverName = '192.168.1.100' # ip do servidor (em branco)
 serverPort = 6500 # porta a se conectar
 serverSocket = socket(AF_INET,SOCK_STREAM) # criacao do socket TCP
 serverSocket.bind((serverName,serverPort)) # bind do ip do servidor com a porta
 serverSocket.listen(1) # socket pronto para 'ouvir' conexoes
 print ('Servidor TCP esperando conexoes na porta %d ...' % (serverPort))
+
 while 1:
-  connectionSocket, addr = serverSocket.accept() # aceita as conexoes dos CLIENTES
-  salve_cliente(connectionSocket, addr)
-  # criando threads
-  thread1 = minhaThread(connectionSocket)
-  # disparando as threads
-  thread1.start()
+    connectionSocket, addr = serverSocket.accept() # aceita as conexoes dos CLIENTES
+    
+    #salve_cliente(connectionSocket, addr)
+    # criando threads
+    thread1 = minhaThread(connectionSocket)
+    # disparando as threads
+    thread1.start()
   
 serverSocket.close() # encerra o socket do servidor

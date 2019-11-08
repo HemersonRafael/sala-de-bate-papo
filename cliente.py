@@ -16,28 +16,54 @@ serverName = '192.168.1.100' # ip do servidor
 serverPort = 6500 # porta a se conectar
 clientSocket = socket(AF_INET,SOCK_STREAM) # criacao do socket TCP
 clientSocket.connect((serverName, serverPort)) # conecta o socket ao servidor
-conversa = []
+chat = []
+userOn = []
 
 def formatMsg(sizeMsg,nickname,command, msg):
     return json.dumps({"sizeMsg":sizeMsg,"nickname":nickname, "command": command, "msg":msg}).encode('utf-8')
+
 def unformatMsg(data):
     return json.loads(data.decode('utf-8'))
+
 def getCommand(command):
     a = command.split('(')
     return(a[0])
-
+def getNickname(data):
+    data = data.split('(')
+    data = data[1].split(')')
+    return data[0]
 
 nickName = input('Para conctar-se a sala de bate papo informe seu nickname: ')
 data = unformatMsg(clientSocket.recv(1024))
-if(data[command] == 'nickName()'):
+if(data['command'] == 'nickname()'):
     clientSocket.send(formatMsg(0,nickName,'nickname()',''))
 
 while True:
-    sentence = input('Digite a mensagem: ') 
-    if(sentence == 'exit()'):
-    elif(sentence == '')
-    conteudo = str([len(sentence),'rafael','publica',sentence])
-    clientSocket.sendall(conteudo.encode('utf-8')) # envia o texto para o servidor
-    modifiedSentence = clientSocket.recv(1024) # recebe do servidor a resposta
-    print ('O servidor (\'%s\', %d) respondeu com: %s' % (serverName, serverPort, modifiedSentence.decode('utf-8')))
+    msgReceive= unformatMsg(clientSocket.recv(1024)) # recebe do servidor a resposta
+    if(msgReceive.get('command') == 'public()'):
+        aux = msgReceive.get('nickname') + ' escreveu: ' + msgReceive.get('msg')
+        chat.append(aux)
+    elif(getCommand(msgReceive.get('command')) == 'private'):
+        aux = msgReceive.get('nickname') + ' escreveu privado para vôce: ' + msgReceive.get('msg')
+        chat.append(aux)
+    elif(msgReceive.get('command') == 'list()'):
+        print(' Lista de usuário online: ', msgReceive.get('msg'))
+    elif(msgReceive.get('command') == 'exit()'):
+        aux = msgReceive.get('nickname') + ' saiu.'
+        chat.append(aux)
+    for x in range(len(chat)): 
+        print(chat[x])
+        
+    sentence = input('Digite a mensagem ou comando: ') 
+    if(getCommand(sentence) == 'private'):
+        msg = input('Informe a mensagem privada: ')
+        clientSocket.send(formatMsg(len(sentence), nickName, sentence, msg))
+    elif(sentence == 'list()'):
+        clientSocket.send(formatMsg(0, nickName, sentence, ''))
+    elif (sentence == 'exit()'):
+        clientSocket.send(formatMsg(0, nickName, sentence, ''))
+        break
+    else:
+        clientSocket.send(formatMsg(len(sentence), nickName, 'public()', sentence))
+
 clientSocket.close() # encerramento o socket do cliente
