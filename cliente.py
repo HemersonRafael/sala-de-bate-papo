@@ -12,10 +12,10 @@ import threading # threads
 import json
 
 # definicao das variaveis
-serverName = '192.168.1.100' # ip do servidor
+serverName = '127.0.0.1' # ip do servidor
 serverPort = 6500 # porta a se conectar
 clientSocket = socket(AF_INET,SOCK_STREAM) # criacao do socket TCP
-serv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
+clientSocket.setsockopt(SOL_SOCKET,SO_REUSEADDR, 1) 
 clientSocket.connect((serverName, serverPort)) # conecta o socket ao servidor
 chat = []
 userOn = []
