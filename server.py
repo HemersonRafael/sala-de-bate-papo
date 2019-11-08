@@ -28,13 +28,15 @@ def saveConnection(connectionSocket):
     connectionSocket.send(formatMsg(0,' ','nickname()',' '))
     data = unformatMsg(connectionSocket.recv(1024)) # recebe dados do cliente
     if(data['command'] == 'nickname()'):
-        LIST_SOCKET.update({addr[0]:[connectionSocket, addr[0], addr[1], data['nickname']]})
+        LIST_SOCKET.update({data['nickname']:[connectionSocket, addr[0], addr[1], data['nickname']]})
+        print(LIST_SOCKET)
     else:
         connectionSocket.send(formatMsg(0,' ','exit()',' '))
         connectionSocket.close()    
 
 def to_receive(connectionSocket):
-    connectionSocket.send(formatMsg(0,' ','nickname()',' '))
+    saveConnection(connectionSocket)
+    #connectionSocket.send(formatMsg(0,' ','nickname()',' '))
     sentence = connectionSocket.recv(1024) # recebe dados do cliente
     print(unformatMsg(sentence))
     connectionSocket.send(formatMsg(2,'server','public()','oi'))
@@ -49,7 +51,7 @@ class minhaThread (threading.Thread):
        
     # a funcao run() e executada por padrao por cada thread 
     def run(self):
-        saveConnection(self.connectionSocket)
+        
         to_receive(self.connectionSocket)
        
 
@@ -57,6 +59,7 @@ class minhaThread (threading.Thread):
 serverName = '192.168.1.100' # ip do servidor (em branco)
 serverPort = 6500 # porta a se conectar
 serverSocket = socket(AF_INET,SOCK_STREAM) # criacao do socket TCP
+serv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
 serverSocket.bind((serverName,serverPort)) # bind do ip do servidor com a porta
 serverSocket.listen(1) # socket pronto para 'ouvir' conexoes
 print ('Servidor TCP esperando conexoes na porta %d ...' % (serverPort))

@@ -15,6 +15,7 @@ import json
 serverName = '192.168.1.100' # ip do servidor
 serverPort = 6500 # porta a se conectar
 clientSocket = socket(AF_INET,SOCK_STREAM) # criacao do socket TCP
+serv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) 
 clientSocket.connect((serverName, serverPort)) # conecta o socket ao servidor
 chat = []
 userOn = []
@@ -28,6 +29,7 @@ def unformatMsg(data):
 def getCommand(command):
     a = command.split('(')
     return(a[0])
+
 def getNickname(data):
     data = data.split('(')
     data = data[1].split(')')
@@ -35,6 +37,7 @@ def getNickname(data):
 
 nickName = input('Para conctar-se a sala de bate papo informe seu nickname: ')
 data = unformatMsg(clientSocket.recv(1024))
+
 if(data['command'] == 'nickname()'):
     clientSocket.send(formatMsg(0,nickName,'nickname()',''))
 
