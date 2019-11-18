@@ -64,31 +64,32 @@ class RecvThread(threading.Thread):
 
     # a funcao run() e executada por padrao por cada thread
     def run(self):
-        data = clientSocket.recv(1024)
-        msgReceive = unformatMsg(data)  # recebe do servidor a resposta)
-        if msgReceive.get("command") == "public()":
-            aux = msgReceive.get("nickname") + " escreveu: " + msgReceive.get("msg")
-            chat.append(aux)
-        elif getCommand(msgReceive.get("command")) == "private":
-            aux = (
-                msgReceive.get("nickname")
-                + " escreveu privado para vôce: "
-                + msgReceive.get("msg")
-            )
-            chat.append(aux)
-        elif msgReceive.get("command") == "list()":
-            chat.append(" Lista de usuário online: ", msgReceive.get("msg"))
-        elif msgReceive.get("command") == "exit()":
-            aux = msgReceive.get("nickname") + " saiu."
-            chat.append(aux)
-        elif msgReceive["command"] == "nicknameError()":
-            print("O nickname informado já existir!")
-            nickName = input("Para conctar-se a sala de bate papo informe seu nickname: ")
-            a = SendThread(formatMsg(0, nickName, "nickname()", ""))
-            a.start()
-            os.system("reset")
-        else:
-            pass
+        while True:
+            data = clientSocket.recv(1024)
+            msgReceive = unformatMsg(data)  # recebe do servidor a resposta)
+            if msgReceive.get("command") == "public()":
+                aux = msgReceive.get("nickname") + " escreveu: " + msgReceive.get("msg")
+                chat.append(aux)
+            elif getCommand(msgReceive.get("command")) == "private":
+                aux = (
+                    msgReceive.get("nickname")
+                    + " escreveu privado para vôce: "
+                    + msgReceive.get("msg")
+                )
+                chat.append(aux)
+            elif msgReceive.get("command") == "list()":
+                chat.append(" Lista de usuário online: ", msgReceive.get("msg"))
+            elif msgReceive.get("command") == "exit()":
+                aux = msgReceive.get("nickname") + " saiu."
+                chat.append(aux)
+            elif msgReceive["command"] == "nicknameError()":
+                print("O nickname informado já existir!")
+                nickName = input("Para conctar-se a sala de bate papo informe seu nickname: ")
+                a = SendThread(formatMsg(0, nickName, "nickname()", ""))
+                a.start()
+                os.system("reset")
+            else:
+                pass
 
 
 while True:
