@@ -11,11 +11,16 @@ from socket import *  # sockets
 import threading  # threads
 import time  # tempo (opcional)
 import json
+import os 
 
 LIST_SOCKET = {}
 LIST_THREAD = []
 chat = []
 
+def printChat():
+    os.system("reset")
+    for x in range(len(chat)):
+        print(chat[x])
 
 def formatMsg(sizeMsg, nickname, command, msg):
     return json.dumps(
@@ -61,6 +66,7 @@ def listAllUser():
 def receiveData(connectionSocket):  
     data = connectionSocket.recv(1024)
     msgReceive = unformatMsg(data)  # recebe do servidor a resposta)
+    print(msgReceive)
     if msgReceive["command"] == "nickname()":
         nameExist = False
         for key in LIST_SOCKET:
@@ -120,7 +126,8 @@ def receiveData(connectionSocket):
         aux = msgReceive.get("nickname") + " saiu " 
         chat.append(aux)
         sendAll(aux)
-
+    
+    printChat()
 
 # define uma classe para a criacao de threads
 class minhaThread(threading.Thread):
@@ -166,8 +173,7 @@ while 1:
     LIST_THREAD[contThread].start()
     contThread = contThread + 1
     
-    for x in range(len(chat)):
-        print(chat[x])
+    printChat()
 
 serverSocket.close()  # encerra o socket do servidor
 

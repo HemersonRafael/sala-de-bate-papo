@@ -22,7 +22,10 @@ clientSocket.connect((serverName, serverPort))  # conecta o socket ao servidor
 chat = []
 msgSend = []
 userOn = []
-
+def printChat():
+    os.system("reset")
+    for x in range(len(chat)):
+        print(chat[x])
 
 def formatMsg(sizeMsg, nickname, command, msg):
     return json.dumps(
@@ -55,6 +58,7 @@ class SendThread(threading.Thread):
     # a funcao run() e executada por padrao por cada thread
     def run(self):
         clientSocket.send(self.msg)
+        print("\n send ok\n")
 
 
 class RecvThread(threading.Thread):
@@ -90,6 +94,7 @@ class RecvThread(threading.Thread):
                 os.system("reset")
             else:
                 pass
+            printChat()
 
 
 while True:
@@ -108,10 +113,6 @@ r = RecvThread()
 r.start()
 
 while True:
-    if len(chat) > 0:
-        for x in range(len(chat)):
-            print(chat[x])
-
     sentence = input("Digite a mensagem ou comando: ")
     if getCommand(sentence) == "private":
         msg = input("Informe a mensagem privada: ")
@@ -125,8 +126,8 @@ while True:
         d.start()
         break
     else:
-        e = SendThread(formatMsg(len(sentence), nickName, "public()", sentence))
-        e.start()
+        clientSocket.send(formatMsg(len(sentence), nickName, "public()", sentence))
+        print("public send")
 
     #os.system("reset")
 clientSocket.close()  # encerramento o socket do cliente
