@@ -43,10 +43,11 @@ def getNickname(data):
     return data[0]
 
 
-def sendAll(msg):
+def sendAll(nickname, msg):
     for val in LIST_SOCKET:
         x = LIST_SOCKET[val][0]
-        x.send(formatMsg(len(msg), val, "public()", msg))
+        a = SendThread(x, formatMsg(len(msg), nickname, "public()", msg))
+        a.start()
 
 
 def closeAll():
@@ -54,80 +55,86 @@ def closeAll():
         LIST_SOCKET[val][0].send(formatMsg(0, val, "exit()", ""))
         LIST_SOCKET[val][0].close()
 
+def closeUser(nickname):
+    for val in LIST_SOCKET:
+        if(nickname == val):
+            LIST_SOCKET[val][0].send(formatMsg(0, val, "exit()", ""))
+            LIST_SOCKET[val][0].close()
 
 def listAllUser():
     users = {}
     for val in LIST_SOCKET:
-        aux = "< " + val + LIST_SOCKET[val][1] + LIST_SOCKET[val][2] + " >\n"
+        aux = "< " + str(val) + str(LIST_SOCKET[val][1]) + str(LIST_SOCKET[val][2]) + " >"
         users.update({val: aux})
     return users
 
 
 def receiveData(connectionSocket):  
-    data = connectionSocket.recv(1024)
-    msgReceive = unformatMsg(data)  # recebe do servidor a resposta)
-    print(msgReceive)
-    if msgReceive["command"] == "nickname()":
-        nameExist = False
-        for key in LIST_SOCKET:
-            if msgReceive["nickname"] == key:
-                nameExist = True
-                break
+    while True:
+        data = connectionSocket.recv(1024)
+        msgReceive = unformatMsg(data)  # recebe do servidor a resposta)
+        if msgReceive["command"] == "nickname()":
+            nameExist = False
+            for key in LIST_SOCKET:
+                if msgReceive["nickname"] == key:
+                    nameExist = True
+                    break
 
-        if nameExist == False:
-            LIST_SOCKET.update(
-                {
-                    msgReceive["nickname"]: [
-                        connectionSocket,
-                        addr[0],
-                        addr[1],
-                        msgReceive["nickname"],
-                    ]
-                }
-            )
-            x = str(LIST_SOCKET[msgReceive["nickname"]][3] + " entrou")
-            chat.append(x)
-            a = SendThread(connectionSocket, formatMsg(0, " ", "nickname()", " "))
-            a.start()
-            sendAll(x)
-        else:
-            aux = "Esse nome de usuário já existir\n"
-            connectionSocket.send(formatMsg(len(aux), " ", "nicknameError()", aux))
+            if nameExist == False:
+                LIST_SOCKET.update(
+                    {
+                        msgReceive["nickname"]: [
+                            connectionSocket,
+                            addr[0],
+                            addr[1],
+                            msgReceive["nickname"],
+                        ]
+                    }
+                )
+                x = str(LIST_SOCKET[msgReceive["nickname"]][3] + " entrou")
+                chat.append(x)
+                a = SendThread(connectionSocket, formatMsg(0, " ", "nickname()", " "))
+                a.start()
+                sendAll(msgReceive["nickname"],x)
+            else:
+                aux = "Esse nome de usuário já existir\n"
+                connectionSocket.send(formatMsg(len(aux), " ", "nicknameError()", aux))
 
-    elif msgReceive.get("command") == "public()":
-        aux = msgReceive.get("nickname") + " escreveu: " + msgReceive.get("msg")
-        chat.append(aux)
-    elif getCommand(msgReceive.get("command")) == "private":
-        for key in LIST_SOCKET:
-            if msgReceive[getNickname(msgReceive.get("command"))] == key:
-                m = SendThread(
-                    LIST_SOCKET[key],
-                    formatMsg(
-                        len(msgReceive.get("msg")),
-                        msgReceive.get("nickname"),
-                        msgReceive.get("command"),
-                        msgReceive.get("msg"),
-                    ),
-                )
-    elif msgReceive.get("command") == "list()":
-        print('list')
-        for key in LIST_SOCKET:
-            if msgReceive["nickname"] == key:
-                m = SendThread(
-                    LIST_SOCKET[key],
-                    formatMsg(
-                        len(listAllUser()),
-                        msgReceive.get("nickname"),
-                        msgReceive.get("command"),
-                        listAllUser(),
-                    ),
-                )
-    elif msgReceive.get("command") == "exit()":
-        aux = msgReceive.get("nickname") + " saiu " 
-        chat.append(aux)
-        sendAll(aux)
-    
-    printChat()
+        elif msgReceive.get("command") == "public()":
+            aux = msgReceive.get("nickname") + " escreveu: " + msgReceive.get("msg")
+            chat.append(aux)
+            sendAll(msgReceive.get("nickname"),msgReceive.get("msg"))
+        elif getCommand(msgReceive.get("command")) == "private":
+            for key in LIST_SOCKET:
+                if msgReceive[getNickname(msgReceive.get("command"))] == key:
+                    m = SendThread(
+                        LIST_SOCKET[key],
+                        formatMsg(
+                            len(msgReceive.get("msg")),
+                            msgReceive.get("nickname"),
+                            msgReceive.get("command"),
+                            msgReceive.get("msg"),
+                        ),
+                    )
+        elif msgReceive.get("command") == "list()":
+            print('list')
+            for key in LIST_SOCKET:
+                if msgReceive["nickname"] == key:
+                    m = SendThread(
+                        LIST_SOCKET[key],
+                        formatMsg(
+                            len(listAllUser()),
+                            msgReceive.get("nickname"),
+                            msgReceive.get("command"),
+                            listAllUser(),
+                        ),
+                    )
+                    m.start()
+        elif msgReceive.get("command") == "exit()":
+            aux = msgReceive.get("nickname") + " saiu " 
+            chat.append(aux)
+            sendAll(msgReceive.get("nickname"), aux)
+        printChat()
 
 # define uma classe para a criacao de threads
 class minhaThread(threading.Thread):
@@ -139,6 +146,7 @@ class minhaThread(threading.Thread):
 
     # a funcao run() e executada por padrao por cada thread
     def run(self):
+
         a = SendThread(connectionSocket, formatMsg(0, " ", "nickname()", " "))
         a.start()
         receiveData(self.connectionSocket)

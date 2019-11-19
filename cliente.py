@@ -58,8 +58,6 @@ class SendThread(threading.Thread):
     # a funcao run() e executada por padrao por cada thread
     def run(self):
         clientSocket.send(self.msg)
-        print("\n send ok\n")
-
 
 class RecvThread(threading.Thread):
     # redefine a funcao __init__ para aceitar a passagem parametros de entrada
@@ -92,8 +90,6 @@ class RecvThread(threading.Thread):
                 a = SendThread(formatMsg(0, nickName, "nickname()", ""))
                 a.start()
                 os.system("reset")
-            else:
-                pass
             printChat()
 
 
@@ -127,7 +123,6 @@ while True:
         break
     else:
         clientSocket.send(formatMsg(len(sentence), nickName, "public()", sentence))
-        print("public send")
-
-    #os.system("reset")
+    printChat()
+    
 clientSocket.close()  # encerramento o socket do cliente
