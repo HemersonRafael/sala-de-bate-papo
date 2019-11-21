@@ -122,7 +122,8 @@ while True:
         d.start()
         break
     else:
-        clientSocket.send(formatMsg(len(sentence), nickName, "public()", sentence))
+        e = SendThread(formatMsg(len(sentence), nickName, "public()", sentence))
+        e.start()
     printChat()
     
 clientSocket.close()  # encerramento o socket do cliente
