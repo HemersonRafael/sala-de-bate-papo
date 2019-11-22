@@ -22,6 +22,8 @@ clientSocket.connect((serverName, serverPort))  # conecta o socket ao servidor
 chat = []
 msgSend = []
 userOn = []
+nickName = ""
+
 def printChat():
     os.system("reset")
     for x in range(len(chat)):
@@ -44,9 +46,9 @@ def getCommand(command):
     return a[0]
 
 def getNickname(data):
-    data = data.split("(")
-    data = data[1].split(")")
-    return data[0]
+    x = data.split("(")
+    data = x[1].split(")")
+    return str(data[0])
 
 
 class SendThread(threading.Thread):
@@ -80,36 +82,38 @@ class RecvThread(threading.Thread):
                 )
                 chat.append(aux)
             elif msgReceive.get("command") == "list()":
-                chat.append(" Lista de usuário online: ", msgReceive.get("msg"))
+                print('lista de user')
+                chat.append(" Lista de usuário online: " + str(msgReceive.get("msg")))
             elif msgReceive.get("command") == "exit()":
                 aux = msgReceive.get("nickname") + " saiu."
                 chat.append(aux)
-            elif msgReceive["command"] == "nicknameError()":
-                print("O nickname informado já existir!")
-                nickName = input("Para conctar-se a sala de bate papo informe seu nickname: ")
-                a = SendThread(formatMsg(0, nickName, "nickname()", ""))
-                a.start()
-                os.system("reset")
+            
             printChat()
 
 
 while True:
 
     data = unformatMsg(clientSocket.recv(1024))
-
-    if data["command"] == "nickname()":
-        nickName = input("Para conctar-se a sala de bate papo informe seu nickname: ")
+    print(data)
+    if data["command"] == "public()":
+        print('Você entrou')
+        break
+    elif data["command"] == "nickname()":
+        nickName = input("Informe seu nickname: ")
         a = SendThread(formatMsg(0, nickName, "nickname()", ""))
         a.start()
-        break
-    else:
-        os.system("reset")
+    elif data["command"] == "nicknameError()":
+        print("O nickname informado já existir!")
+        nickName = input("Informe seu nickname: ")
+        a = SendThread(formatMsg(0, nickName, "nickname()", ""))
+        a.start()
+   
 
 r = RecvThread()
 r.start()
 
 while True:
-    sentence = input("Digite a mensagem ou comando: ")
+    sentence = input()
     if getCommand(sentence) == "private":
         msg = input("Informe a mensagem privada: ")
         b = SendThread(formatMsg(len(sentence), nickName, sentence, msg))

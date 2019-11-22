@@ -71,42 +71,47 @@ def listAllUser():
 
 def receiveData(connectionSocket):  
     while True:
-        data = connectionSocket.recv(1024)
-        msgReceive = unformatMsg(data)  # recebe do servidor a resposta)
-        if msgReceive["command"] == "nickname()":
-            nameExist = False
-            for key in LIST_SOCKET:
-                if msgReceive["nickname"] == key:
-                    nameExist = True
+        while True:
+            data = connectionSocket.recv(1024)
+            msgReceive = unformatMsg(data)  # recebe do servidor a resposta)
+            if msgReceive["command"] == "nickname()":
+                nameExist = False
+                for key in LIST_SOCKET:
+                    if msgReceive["nickname"] == key:
+                        nameExist = True
+                        break
+
+                if nameExist == False:
+                    LIST_SOCKET.update(
+                        {
+                            msgReceive["nickname"]: [
+                                connectionSocket,
+                                addr[0],
+                                addr[1],
+                                msgReceive["nickname"],
+                            ]
+                        }
+                    )
+                    x = str(LIST_SOCKET[msgReceive["nickname"]][3] + " entrou")
+                    chat.append(x)
+                    a = SendThread(connectionSocket, formatMsg(0, " ", "nickname()", " "))
+                    a.start()
+                    sendAll(msgReceive["nickname"],x)
                     break
-
-            if nameExist == False:
-                LIST_SOCKET.update(
-                    {
-                        msgReceive["nickname"]: [
-                            connectionSocket,
-                            addr[0],
-                            addr[1],
-                            msgReceive["nickname"],
-                        ]
-                    }
-                )
-                x = str(LIST_SOCKET[msgReceive["nickname"]][3] + " entrou")
-                chat.append(x)
-                a = SendThread(connectionSocket, formatMsg(0, " ", "nickname()", " "))
-                a.start()
-                sendAll(msgReceive["nickname"],x)
+                else:
+                    aux = "Esse nome de usuário já existir\n"
+                    connectionSocket.send(formatMsg(len(aux), " ", "nicknameError()", aux))
             else:
-                aux = "Esse nome de usuário já existir\n"
-                connectionSocket.send(formatMsg(len(aux), " ", "nicknameError()", aux))
+                break
 
-        elif msgReceive.get("command") == "public()":
+        if msgReceive.get("command") == "public()":
             aux = msgReceive.get("nickname") + " escreveu: " + msgReceive.get("msg")
             chat.append(aux)
             sendAll(msgReceive.get("nickname"),msgReceive.get("msg"))
         elif getCommand(msgReceive.get("command")) == "private":
             for key in LIST_SOCKET:
-                if msgReceive[getNickname(msgReceive.get("command"))] == key:
+                print(getNickname(msgReceive.get("command")), key)
+                if LIST_SOCKET[getNickname(msgReceive.get("command"))] == key:
                     m = SendThread(
                         LIST_SOCKET[key],
                         formatMsg(
@@ -116,6 +121,7 @@ def receiveData(connectionSocket):
                             msgReceive.get("msg"),
                         ),
                     )
+                    m.start()
         elif msgReceive.get("command") == "list()":
             print('list')
             for key in LIST_SOCKET:
@@ -130,10 +136,15 @@ def receiveData(connectionSocket):
                         ),
                     )
                     m.start()
+                    print(listAllUser())
         elif msgReceive.get("command") == "exit()":
             aux = msgReceive.get("nickname") + " saiu " 
             chat.append(aux)
             sendAll(msgReceive.get("nickname"), aux)
+            closeUser(msgReceive.get("nickname"))
+        else:
+            print('erro')
+            time.sleep(1)
         printChat()
 
 # define uma classe para a criacao de threads
@@ -182,6 +193,9 @@ while 1:
     contThread = contThread + 1
     
     printChat()
+    print('________lista de usuário________')
+    print(listAllUser())
+
 
 serverSocket.close()  # encerra o socket do servidor
 
