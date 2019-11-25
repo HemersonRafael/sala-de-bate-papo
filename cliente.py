@@ -95,7 +95,7 @@ while True:
 
     data = unformatMsg(clientSocket.recv(1024))
     print(data)
-    if data["command"] == "public()":
+    if data["command"] == "nicknameOk()":
         print('Você entrou')
         break
     elif data["command"] == "nickname()":

@@ -94,7 +94,7 @@ def receiveData(connectionSocket):
                     )
                     x = str(LIST_SOCKET[msgReceive["nickname"]][3] + " entrou")
                     chat.append(x)
-                    a = SendThread(connectionSocket, formatMsg(0, " ", "nickname()", " "))
+                    a = SendThread(connectionSocket, formatMsg(0, " ", "nicknameOk()", " "))
                     a.start()
                     sendAll(msgReceive["nickname"],x)
                     break
